@@ -12,3 +12,5 @@ cloudinary==1.39.1
 python-dotenv==1.0.1
 Werkzeug==3.0.2
 flasgger==0.9.7
+
+python-dotenv==1.0.1
