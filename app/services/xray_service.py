@@ -1,25 +1,39 @@
 from datetime import datetime
-from typing import Optional
+import logging
 import re
+from typing import Optional
 from uuid import uuid4
 
 from pydantic import ValidationError
 from werkzeug.datastructures import FileStorage
 
 from app.core.config import Config
+from app.core.security import create_image_access_token
 from app.models.xray_record import XRayRecord
 from app.repositories.xray_repository import XRayRepository
 from app.schemas.xray_schema import XRayCreateSchema, XRayUpdateSchema
 from app.services.cloudinary_service import CloudinaryService, CloudinaryUploadError
+
+
+logger = logging.getLogger(__name__)
+
+
 class XRayNotFoundError(Exception):
 	pass
 
+
 class InvalidFileError(Exception):
 	pass
+
+
 class DuplicateClinicalHistoryCodeError(Exception):
 	pass
+
+
 class XRayCreationError(Exception):
 	pass
+
+
 class XRayService:
 	ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 	ALLOWED_MIME_TYPES = {"image/jpeg", "image/png"}
@@ -71,8 +85,25 @@ class XRayService:
 			self.repository.rollback()
 			raise XRayCreationError(f"Failed to create X-ray record. Detail: {exc}") from exc
 
-	def list_xrays(self, skip: int = 0, limit: int = 10, patient_name: str = None):
-		return self.repository.get_all_paginated(skip=skip, limit=limit, patient_name=patient_name)
+	def list_radiographs(
+		self,
+		skip: int = 0,
+		limit: int = 10,
+		patient_name: str = None,
+		clinical_history_code: str = None,
+		study_date: str = None,
+		sort_by: str = "study_date",
+		sort_order: str = "desc",
+	):
+		return self.repository.get_all_paginated(
+			skip=skip,
+			limit=limit,
+			patient_name=patient_name,
+			clinical_history_code=clinical_history_code,
+			study_date=study_date,
+			sort_by=sort_by,
+			sort_order=sort_order,
+		)
 
 	def get_xray_by_id(self, record_id: int):
 		record = self.repository.get_by_id(record_id)
@@ -107,53 +138,59 @@ class XRayService:
 			)
 			record.image_url = stored_public_id
 
-		return self.repository.save(record)
+		saved_record = self.repository.save(record)
+		if saved_record is None:
+			raise RuntimeError("Repository returned None while updating X-Ray record.")
+		return saved_record
 
 	def delete_xray(self, record_id: int):
 		record = self.get_xray_by_id(record_id)
+		if Config.IMAGE_DELETE_REMOTE_ON_RECORD_DELETE and record.image_url:
+			try:
+				self.cloudinary_service.delete_image(record.image_url)
+			except CloudinaryUploadError as exc:
+				logger.warning(
+					"Cloudinary delete failed for record_id=%s image_reference=%s detail=%s",
+					record.id,
+					record.image_url,
+					exc,
+				)
 		self.repository.delete(record)
 
-	def generate_signed_image_url(
+	def resolve_dynamic_image_url(
 		self,
-		record_id: int,
+		record: XRayRecord,
+		user_identifier: str,
 		expires_in_seconds: Optional[int] = None,
 	):
-		record = self.get_xray_by_id(record_id)
 		if not record.image_url:
-			raise InvalidFileError("This record has no associated image.")
+			return None
 
 		ttl = expires_in_seconds if expires_in_seconds is not None else self.default_signed_ttl
 		ttl = self._sanitize_ttl(ttl)
-
-		signed = self.cloudinary_service.generate_signed_image_url(
-			public_id=record.image_url,
+		token_ttl = min(ttl, Config.SECURE_IMAGE_TOKEN_TTL_SECONDS)
+		image_token = create_image_access_token(
+			secret_key=Config.SECRET_KEY,
+			user_identifier=user_identifier,
+			xray_id=record.id,
+			expires_in_seconds=token_ttl,
+		)
+		return self.cloudinary_service.resolve_image_access_url(
+			image_reference=record.image_url,
 			expires_in_seconds=ttl,
+			user_token=image_token["token"],
 		)
-		return {
-			"xray_id": record.id,
-			**signed,
-		}
 
-	def prepare_image_access(self, record_id: int, expires_in_seconds: Optional[int] = None):
-		record = self.get_xray_by_id(record_id)
-		if not record.image_url:
-			raise InvalidFileError("This record has no associated image.")
-
-		ttl = expires_in_seconds if expires_in_seconds is not None else self.default_signed_ttl
-		ttl = self._sanitize_ttl(ttl)
-
-		return {
-			"xray_id": record.id,
-			"public_id": record.image_url,
-			"expires_in_seconds": ttl,
-		}
-
-	def get_image_content(self, record_id: int, expires_in_seconds: int):
-		image_access = self.prepare_image_access(record_id, expires_in_seconds)
-		return self.cloudinary_service.download_authenticated_image(
-			public_id=image_access["public_id"],
-			expires_in_seconds=image_access["expires_in_seconds"],
-		)
+	def enforce_private_images(self):
+		records = self.repository.get_all()
+		processed = 0
+		for record in records:
+			if not record.image_url:
+				continue
+			self.cloudinary_service.ensure_private_delivery(record.image_url)
+			processed += 1
+		logger.info("Daily private image enforcement processed=%s", processed)
+		return {"processed": processed}
 
 	def _assert_unique_clinical_code(self, clinical_history_code: str):
 		existing = self.repository.get_by_clinical_history_code(clinical_history_code)
