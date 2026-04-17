@@ -16,10 +16,23 @@ class XRayRepository:
         """Returns the base query for the CRUD operations to filter or paginate."""
         return self.session.query(XRayRecord)
 
+    def get_by_id(self, record_id: int):
+        return self.session.query(XRayRecord).filter(XRayRecord.id == record_id).first()
+
+    def get_by_clinical_history_code(self, clinical_history_code: str):
+        return (
+            self.session.query(XRayRecord)
+            .filter(XRayRecord.clinical_history_code == clinical_history_code)
+            .first()
+        )
+
     def delete(self, record: XRayRecord):
         """Physically delete a record."""
         self.session.delete(record)
         self.session.commit()
+
+    def rollback(self):
+        self.session.rollback()
 
     def get_all_paginated(self, skip: int = 0, limit: int = 10, patient_name: str = None):
         
