@@ -4,6 +4,10 @@ from flask import Blueprint, g, jsonify, request
 from flasgger import swag_from
 from pydantic import ValidationError
 
+from app.schemas.xray_schema import (
+	RadiographListSchema,
+	XRayResponseSchema,
+)
 from app.services.auth_service import token_required
 from app.services.cloudinary_service import CloudinaryUploadError
 from app.services.xray_service import (
@@ -31,6 +35,12 @@ def serialize_radiograph_record(radiograph_record, resolved_image_url: str = Non
 		"image_reference": radiograph_record.image_url,
 		"image_url": resolved_image_url,
 	}
+
+
+def serialize_radiograph_record_response(radiograph_record, resolved_image_url: str = None):
+	return XRayResponseSchema.model_validate(
+		serialize_radiograph_record(radiograph_record, resolved_image_url=resolved_image_url)
+	).model_dump(mode="json")
 
 
 @radiographs_bp.route("/radiographs", methods=["POST"])
@@ -90,7 +100,8 @@ def create_radiograph():
 		radiographs_logger.exception("Unexpected error while creating radiograph")
 		return jsonify({"message": "Internal server error."}), 500
 
-	return jsonify({"message": "Created.", "data": serialize_radiograph_record(radiograph)}), 201
+	validated_data = serialize_radiograph_record_response(radiograph)
+	return jsonify({"message": "Created.", "data": validated_data}), 201
 
 
 @radiographs_bp.route("/radiographs", methods=["GET"])
@@ -215,21 +226,21 @@ def list_radiographs():
 		"clinical_history_code": clinical_history_code,
 		"study_date": study_date,
 	}
-	return jsonify(
-		{
-			"message": "Radiographs retrieved.",
-			"pagination": {
-				"page": page,
-				"size": size,
-				"skip": skip,
-				"limit": limit,
-				"sort_by": sort_by,
-				"sort_order": sort_order,
-			},
-			"filters": filters,
-			"data": [serialize_radiograph_record(record) for record in (radiographs or [])],
-		}
-	), 200
+	response_payload = {
+		"message": "Radiographs retrieved.",
+		"pagination": {
+			"page": page,
+			"size": size,
+			"skip": skip,
+			"limit": limit,
+			"sort_by": sort_by,
+			"sort_order": sort_order,
+		},
+		"filters": filters,
+		"data": [serialize_radiograph_record(record) for record in (radiographs or [])],
+	}
+	validated_response = RadiographListSchema.model_validate(response_payload).model_dump(mode="json")
+	return jsonify(validated_response), 200
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>", methods=["GET"])
@@ -270,7 +281,8 @@ def get_radiograph_by_id(radiograph_id: int):
 		radiographs_logger.exception("Unexpected error while retrieving radiograph id=%s", radiograph_id)
 		return jsonify({"message": "Internal server error."}), 500
 
-	return jsonify({"message": "Radiograph retrieved.", "data": serialize_radiograph_record(radiograph, resolved_image_url=dynamic_image_url)}), 200
+	validated_data = serialize_radiograph_record_response(radiograph, resolved_image_url=dynamic_image_url)
+	return jsonify({"message": "Radiograph retrieved.", "data": validated_data}), 200
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>", methods=["PUT"])
@@ -339,7 +351,8 @@ def update_radiograph(radiograph_id: int):
 		radiographs_logger.exception("Unexpected error while updating radiograph id=%s", radiograph_id)
 		return jsonify({"message": "Internal server error."}), 500
 
-	return jsonify({"message": "Updated.", "data": serialize_radiograph_record(radiograph)}), 200
+	validated_data = serialize_radiograph_record_response(radiograph)
+	return jsonify({"message": "Updated.", "data": validated_data}), 200
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>", methods=["DELETE"])
