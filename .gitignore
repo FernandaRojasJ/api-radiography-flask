@@ -1,5 +1,8 @@
 # Virtual environments
-venv/
+venv
+.direnv/
+.venv/
+.envrc
 
 # Environment variables
 .env
