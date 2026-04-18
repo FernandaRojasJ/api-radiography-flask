@@ -1,0 +1,20 @@
+# Virtual environments
+venv
+.direnv/
+.venv/
+.envrc
+
+# Environment variables
+.env
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temp stuff
+temp-docs/
