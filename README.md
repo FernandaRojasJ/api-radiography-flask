@@ -112,21 +112,14 @@ If you use direnv, allow it once and it will auto-enter:
 direnv allow
 ```
 
-2. Create and activate virtual environment.
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
-
-3. Install dependencies.
+2. Install dependencies.
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-4. Apply migrations and run.
+3. Apply migrations and run.
 
 ```bash
 python -m alembic upgrade head
