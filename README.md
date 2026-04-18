@@ -178,6 +178,44 @@ After starting the server (`python -m app.main`):
 - Swagger UI: `http://127.0.0.1:5000/apidocs/`
 - OpenAPI JSON: `http://127.0.0.1:5000/apispec_1.json`
 
+## CI Pipeline (GitHub Actions)
+
+This project includes a basic CI pipeline in:
+
+- `.github/workflows/ci.yml`
+
+### What this pipeline does
+
+On every push and pull request, it will:
+
+1. Checkout the repository code.
+2. Install Python 3.12.
+3. Install project dependencies from `requirements.txt`.
+4. Run Alembic migrations (`upgrade head`).
+5. Check Python syntax with `compileall`.
+6. Run smoke tests against Flask test client.
+
+### Why this helps
+
+- Catches broken dependencies quickly.
+- Validates database schema/migrations in CI.
+- Detects syntax/runtime integration errors before merge.
+- Gives confidence that main endpoints still boot and respond.
+
+### How to see pipeline status
+
+1. Push your branch to GitHub.
+2. Open your repository in GitHub.
+3. Go to the **Actions** tab.
+4. Open the latest workflow run (`CI Pipeline`).
+5. Expand each step to see logs.
+
+### Common first-time issues
+
+- **Dependency install fails**: check package versions in `requirements.txt`.
+- **Migration step fails**: verify Alembic files and model changes are consistent.
+- **Smoke tests fail**: inspect endpoint behavior changes and adjust assertions.
+
 ## Database And Migrations
 
 ### Relevant Files
