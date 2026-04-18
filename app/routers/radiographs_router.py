@@ -32,6 +32,7 @@ def serialize_radiograph_record(radiograph_record, resolved_image_url: str = Non
 	return {
 		"id": radiograph_record.id,
 		"patient_full_name": radiograph_record.patient_full_name,
+		"patient_identifier": radiograph_record.patient_identifier,
 		"clinical_history_code": radiograph_record.clinical_history_code,
 		"clinical_description": radiograph_record.clinical_description,
 		"study_date": radiograph_record.study_date.isoformat() if radiograph_record.study_date else None,
@@ -49,8 +50,9 @@ def serialize_radiograph_record(radiograph_record, resolved_image_url: str = Non
 		"consumes": ["multipart/form-data"],
 		"parameters": [
 			{"name": "patient_full_name", "in": "formData", "required": True, "type": "string"},
+			{"name": "patient_identifier", "in": "formData", "required": True, "type": "string"},
 			{"name": "clinical_history_code", "in": "formData", "required": True, "type": "string"},
-			{"name": "clinical_description", "in": "formData", "required": False, "type": "string"},
+			{"name": "clinical_description", "in": "formData", "required": True, "type": "string"},
 			{"name": "study_date", "in": "formData", "required": False, "type": "string", "format": "date-time"},
 			{"name": "image_file", "in": "formData", "required": True, "type": "file"},
 		],
@@ -69,6 +71,7 @@ def create_radiograph():
 
 	radiograph_data = {
 		"patient_full_name": request.form.get("patient_full_name"),
+		"patient_identifier": request.form.get("patient_identifier"),
 		"clinical_history_code": request.form.get("clinical_history_code"),
 		"clinical_description": request.form.get("clinical_description"),
 		"study_date": request.form.get("study_date"),
@@ -182,6 +185,7 @@ def get_radiograph_by_id(radiograph_id: int):
 		"parameters": [
 			{"name": "radiograph_id", "in": "path", "required": True, "type": "integer"},
 			{"name": "patient_full_name", "in": "formData", "required": False, "type": "string"},
+			{"name": "patient_identifier", "in": "formData", "required": False, "type": "string"},
 			{"name": "clinical_history_code", "in": "formData", "required": False, "type": "string"},
 			{"name": "clinical_description", "in": "formData", "required": False, "type": "string"},
 			{"name": "study_date", "in": "formData", "required": False, "type": "string", "format": "date-time"},
@@ -206,6 +210,7 @@ def update_radiograph(radiograph_id: int):
 
 	radiograph_data = {
 		"patient_full_name": request.form.get("patient_full_name"),
+		"patient_identifier": request.form.get("patient_identifier"),
 		"clinical_history_code": request.form.get("clinical_history_code"),
 		"clinical_description": request.form.get("clinical_description"),
 		"study_date": request.form.get("study_date"),

@@ -66,6 +66,7 @@ class XRayService:
 
 			record = XRayRecord(
 				patient_full_name=payload.patient_full_name,
+				patient_identifier=payload.patient_identifier,
 				clinical_history_code=payload.clinical_history_code,
 				clinical_description=payload.clinical_description,
 				study_date=payload.study_date or datetime.utcnow(),

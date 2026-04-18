@@ -15,3 +15,6 @@ venv
 # Python cache
 __pycache__/
 *.pyc
+
+# Temp stuff
+temp-docs/
