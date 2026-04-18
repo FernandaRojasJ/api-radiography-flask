@@ -35,7 +35,40 @@ SECRET_KEY=your_secret_key
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/auth/google/callback
+GOOGLE_OAUTH_SCOPES=openid email profile
+GOOGLE_OAUTH_TIMEOUT_SECONDS=10
 ```
+
+### Google SSO Setup
+
+1. In Google Cloud Console, create OAuth 2.0 Client ID (Web application).
+2. Add authorized redirect URI:
+
+```text
+http://127.0.0.1:5000/auth/google/callback
+```
+
+3. Set these values in `.env`:
+
+```env
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/auth/google/callback
+```
+
+4. Restart API server.
+
+5. Verify configuration:
+
+```bash
+curl -i "http://127.0.0.1:5000/auth/google/login?mode=json"
+```
+
+- If configured: HTTP 200 and JSON with `authorization_url`.
+- If not configured: HTTP 500 and `missing_settings` list.
 
 ## Setup
 

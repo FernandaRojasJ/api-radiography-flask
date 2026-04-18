@@ -42,3 +42,8 @@ class Config:
     ).lower() == "true"
     MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "5"))
     MAX_CONTENT_LENGTH = MAX_FILE_SIZE_MB * 1024 * 1024
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "")
+    GOOGLE_OAUTH_SCOPES = os.getenv("GOOGLE_OAUTH_SCOPES", "openid email profile")
+    GOOGLE_OAUTH_TIMEOUT_SECONDS = int(os.getenv("GOOGLE_OAUTH_TIMEOUT_SECONDS", "10"))
