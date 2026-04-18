@@ -25,6 +25,14 @@ This project is being built with Flask and follows a layered architecture.
 - `app/core`: shared config and security utilities (partially ready)
 - `migrations`: Alembic environment and migration history (ready)
 
+## Technical Decisions
+
+1. **Layered architecture**: routers only handle HTTP concerns, services hold business rules, repositories access DB.
+2. **SQLite for local/dev**: simple setup for first delivery and exam demo.
+3. **Cloudinary for image storage**: API does not serve binary images directly.
+4. **JWT-based protection**: protected routes validate bearer tokens.
+5. **Swagger docs with Flasgger**: quick contract visibility for team and evaluators.
+
 ## Environment Variables
 
 Create a `.env` file in the project root using `.env.example` as template:
@@ -178,6 +186,72 @@ After starting the server (`python -m app.main`):
 - Swagger UI: `http://127.0.0.1:5000/apidocs/`
 - OpenAPI JSON: `http://127.0.0.1:5000/apispec_1.json`
 
+## Main Endpoint Examples
+
+### 1) Issue local JWT by user id
+
+```bash
+curl -X POST "http://127.0.0.1:5000/auth/token" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1}'
+```
+
+### 2) Start Google SSO
+
+```bash
+curl -i "http://127.0.0.1:5000/auth/google/login?mode=json"
+```
+
+### 3) Create radiograph (multipart)
+
+```bash
+curl -X POST "http://127.0.0.1:5000/radiographs" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -F "patient_full_name=Juan Perez" \
+  -F "patient_identifier=CC-123456" \
+  -F "clinical_history_code=HC-2026-001" \
+  -F "clinical_description=Dolor toracico persistente" \
+  -F "study_date=2026-04-18T10:30:00Z" \
+  -F "image_file=@./sample.png;type=image/png"
+```
+
+### 4) List with pagination, filters, and sorting
+
+```bash
+curl "http://127.0.0.1:5000/radiographs?page=1&size=10&sort=study_date:desc&patient_name=juan"
+```
+
+### 5) Get by id (protected)
+
+```bash
+curl -H "Authorization: Bearer <JWT_TOKEN>" \
+  "http://127.0.0.1:5000/radiographs/1"
+```
+
+### 6) Update (multipart optional image)
+
+```bash
+curl -X PUT "http://127.0.0.1:5000/radiographs/1" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -F "clinical_description=Descripcion actualizada" \
+  -F "image_file=@./sample.png;type=image/png"
+```
+
+### 7) Delete by id
+
+```bash
+curl -i -X DELETE -H "Authorization: Bearer <JWT_TOKEN>" \
+  "http://127.0.0.1:5000/radiographs/1"
+```
+
+### 8) Typical auth error example
+
+```bash
+curl -i "http://127.0.0.1:5000/radiographs/1"
+```
+
+Expected: `401 UNAUTHORIZED`
+
 ## CI Pipeline (GitHub Actions)
 
 This project includes a basic CI pipeline in:
@@ -209,6 +283,14 @@ On every push and pull request, it will:
 3. Go to the **Actions** tab.
 4. Open the latest workflow run (`CI Pipeline`).
 5. Expand each step to see logs.
+
+### Optional secret (recommended)
+
+This workflow supports a repository secret named `CI_SECRET_KEY`.
+
+1. Go to **Settings** -> **Secrets and variables** -> **Actions**.
+2. Create secret `CI_SECRET_KEY` with a random value.
+3. If not set, workflow uses fallback `ci-secret-key` for CI-only checks.
 
 ### Common first-time issues
 
