@@ -1,5 +1,6 @@
 import jwt
 import secrets
+from datetime import datetime
 from urllib.parse import urlencode
 
 import requests
@@ -39,15 +40,18 @@ def _resolve_google_redirect_uri() -> str:
 
 
 def _issue_local_jwt(subject: str, email: str = None, google_sub: str = None) -> str:
+	now = int(datetime.utcnow().timestamp())
 	token_payload = {
 		"sub": str(subject),
 		"provider": "google",
+		"iat": now,
+		"exp": now + Config.JWT_ACCESS_TOKEN_EXPIRES,
 	}
 	if email:
 		token_payload["email"] = email
 	if google_sub:
 		token_payload["google_sub"] = google_sub
-	return jwt.encode(token_payload, Config.SECRET_KEY, algorithm="HS256")
+	return jwt.encode(token_payload, Config.SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
 
 
 @auth_bp.route("/auth/token", methods=["POST"])
@@ -94,11 +98,14 @@ def auth_token():
 	if user_record is None:
 		return jsonify({"message": "User not found in database."}), 404
 
+	now = int(datetime.utcnow().timestamp())
 	token_payload = {
 		"sub": str(user_id),
 		"user_id": str(user_id),
+		"iat": now,
+		"exp": now + Config.JWT_ACCESS_TOKEN_EXPIRES,
 	}
-	token = jwt.encode(token_payload, Config.SECRET_KEY, algorithm="HS256")
+	token = jwt.encode(token_payload, Config.SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
 	return jsonify({"access_token": token, "token_type": "bearer"}), 200
 
 
