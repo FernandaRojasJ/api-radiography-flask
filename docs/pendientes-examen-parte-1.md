@@ -84,10 +84,10 @@
 - [X] Publicar documentacion automatica con Swagger.
   - Como hacerlo: configurar Flasgger/OpenAPI y exponer endpoint de docs.
 
-- [ ] Agregar ejemplos claros en endpoints principales.
+- [X] Agregar ejemplos claros en endpoints principales.
   - Como hacerlo: incluir ejemplos de request/response y errores comunes en la documentacion.
 
-- [ ] Configurar pipeline basico CI.
+- [X] Configurar pipeline basico CI.
   - Como hacerlo: workflow que instale dependencias y levante/verifique la app sin errores.
 
 - [ ] Desplegar en servicio gratuito con acceso publico.
@@ -98,7 +98,7 @@
 - [ ] Compartir repositorio privado con el profesor.
   - Como hacerlo: agregar permisos al repo y validar acceso del profesor antes de cierre.
 
-- [ ] Completar README con lo requerido.
+- [X] Completar README con lo requerido.
   - Como hacerlo: incluir instalacion, descripcion del sistema y decisiones tecnicas.
 
 - [ ] Grabar video de 15 a 20 minutos.
@@ -136,10 +136,10 @@
 - [X] Validaciones con Pydantic (10%).
   - Como hacerlo: constraints por campo, mensajes claros y schemas de respuesta.
 
-- [ ] Pipeline (10%).
+- [X] Pipeline (10%).
   - Como hacerlo: ejecutar instalacion y verificacion de arranque en cada push.
 
-- [ ] Documentacion (10%).
+- [X] Documentacion (10%).
   - Como hacerlo: docs navegables, completas y con ejemplos utiles.
 
 - [ ] Presentacion en video (10%).
@@ -159,7 +159,7 @@
 - [X] URL de imagen es externa/CDN y persiste correctamente.
   - Como hacerlo: verificar URL en BD y acceso desde navegador.
 
-- [ ] Migraciones aplicadas y base consistente.
+- [X] Migraciones aplicadas y base consistente.
   - Como hacerlo: ejecutar migraciones limpias y revisar esquema final.
 
 - [ ] README y video cumplen exactamente lo solicitado.
