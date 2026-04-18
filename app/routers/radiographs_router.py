@@ -1,10 +1,10 @@
 import logging
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 from flasgger import swag_from
 from pydantic import ValidationError
 
-from app.core.security import SecurityError, resolve_authenticated_user_identifier
+from app.services.auth_service import token_required
 from app.services.cloudinary_service import CloudinaryUploadError
 from app.services.xray_service import (
 	DuplicateClinicalHistoryCodeError,
@@ -18,14 +18,6 @@ from app.services.xray_service import (
 radiographs_logger = logging.getLogger(__name__)
 radiographs_bp = Blueprint("radiographs", __name__)
 radiographs_service = XRayService()
-
-
-def _require_authenticated_user():
-	try:
-		return resolve_authenticated_user_identifier(request)
-	except SecurityError as exc:
-		radiographs_logger.warning("Authentication failed for radiographs endpoint: %s", exc)
-		return None
 
 
 def serialize_radiograph_record(radiograph_record, resolved_image_url: str = None):
@@ -42,6 +34,7 @@ def serialize_radiograph_record(radiograph_record, resolved_image_url: str = Non
 
 
 @radiographs_bp.route("/radiographs", methods=["POST"])
+@token_required
 @swag_from(
 	{
 		"tags": ["Radiographs"],
@@ -66,9 +59,6 @@ def serialize_radiograph_record(radiograph_record, resolved_image_url: str = Non
 	}
 )
 def create_radiograph():
-	if _require_authenticated_user() is None:
-		return jsonify({"message": "Authentication required."}), 401
-
 	radiograph_data = {
 		"patient_full_name": request.form.get("patient_full_name"),
 		"patient_identifier": request.form.get("patient_identifier"),
@@ -243,6 +233,7 @@ def list_radiographs():
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>", methods=["GET"])
+@token_required
 @swag_from(
 	{
 		"tags": ["Radiographs"],
@@ -260,10 +251,7 @@ def list_radiographs():
 	}
 )
 def get_radiograph_by_id(radiograph_id: int):
-	user_identifier = _require_authenticated_user()
-	if user_identifier is None:
-		return jsonify({"message": "Authentication required."}), 401
-
+	user_identifier = g.current_user
 	expires_in = request.args.get("expires_in_seconds", default=None, type=int)
 	try:
 		radiograph = radiographs_service.get_xray_by_id(radiograph_id)
@@ -286,6 +274,7 @@ def get_radiograph_by_id(radiograph_id: int):
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>", methods=["PUT"])
+@token_required
 @swag_from(
 	{
 		"tags": ["Radiographs"],
@@ -314,9 +303,6 @@ def get_radiograph_by_id(radiograph_id: int):
 def update_radiograph(radiograph_id: int):
 	if radiograph_id <= 0:
 		return jsonify({"message": "radiograph_id must be greater than 0."}), 400
-
-	if _require_authenticated_user() is None:
-		return jsonify({"message": "Authentication required."}), 401
 
 	radiograph_data = {
 		"patient_full_name": request.form.get("patient_full_name"),
@@ -357,6 +343,7 @@ def update_radiograph(radiograph_id: int):
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>", methods=["DELETE"])
+@token_required
 @swag_from(
 	{
 		"tags": ["Radiographs"],
@@ -373,9 +360,6 @@ def update_radiograph(radiograph_id: int):
 	}
 )
 def delete_radiograph(radiograph_id: int):
-	if _require_authenticated_user() is None:
-		return jsonify({"message": "Authentication required."}), 401
-
 	try:
 		radiographs_service.delete_xray(radiograph_id)
 	except XRayNotFoundError as exc:
@@ -388,6 +372,7 @@ def delete_radiograph(radiograph_id: int):
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>/image", methods=["GET"])
+@token_required
 @swag_from(
 	{
 		"tags": ["Radiographs"],
@@ -407,10 +392,7 @@ def delete_radiograph(radiograph_id: int):
 	}
 )
 def get_radiograph_image(radiograph_id: int):
-	user_identifier = _require_authenticated_user()
-	if user_identifier is None:
-		return jsonify({"message": "Authentication required."}), 401
-
+	user_identifier = g.current_user
 	expires_in = request.args.get("expires_in_seconds", default=None, type=int)
 	try:
 		radiograph = radiographs_service.get_xray_by_id(radiograph_id)
