@@ -35,7 +35,40 @@ SECRET_KEY=your_secret_key
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/auth/google/callback
+GOOGLE_OAUTH_SCOPES=openid email profile
+GOOGLE_OAUTH_TIMEOUT_SECONDS=10
 ```
+
+### Google SSO Setup
+
+1. In Google Cloud Console, create OAuth 2.0 Client ID (Web application).
+2. Add authorized redirect URI:
+
+```text
+http://127.0.0.1:5000/auth/google/callback
+```
+
+3. Set these values in `.env`:
+
+```env
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/auth/google/callback
+```
+
+4. Restart API server.
+
+5. Verify configuration:
+
+```bash
+curl -i "http://127.0.0.1:5000/auth/google/login?mode=json"
+```
+
+- If configured: HTTP 200 and JSON with `authorization_url`.
+- If not configured: HTTP 500 and `missing_settings` list.
 
 ## Setup
 
@@ -144,6 +177,44 @@ After starting the server (`python -m app.main`):
 
 - Swagger UI: `http://127.0.0.1:5000/apidocs/`
 - OpenAPI JSON: `http://127.0.0.1:5000/apispec_1.json`
+
+## CI Pipeline (GitHub Actions)
+
+This project includes a basic CI pipeline in:
+
+- `.github/workflows/ci.yml`
+
+### What this pipeline does
+
+On every push and pull request, it will:
+
+1. Checkout the repository code.
+2. Install Python 3.12.
+3. Install project dependencies from `requirements.txt`.
+4. Run Alembic migrations (`upgrade head`).
+5. Check Python syntax with `compileall`.
+6. Run smoke tests against Flask test client.
+
+### Why this helps
+
+- Catches broken dependencies quickly.
+- Validates database schema/migrations in CI.
+- Detects syntax/runtime integration errors before merge.
+- Gives confidence that main endpoints still boot and respond.
+
+### How to see pipeline status
+
+1. Push your branch to GitHub.
+2. Open your repository in GitHub.
+3. Go to the **Actions** tab.
+4. Open the latest workflow run (`CI Pipeline`).
+5. Expand each step to see logs.
+
+### Common first-time issues
+
+- **Dependency install fails**: check package versions in `requirements.txt`.
+- **Migration step fails**: verify Alembic files and model changes are consistent.
+- **Smoke tests fail**: inspect endpoint behavior changes and adjust assertions.
 
 ## Database And Migrations
 

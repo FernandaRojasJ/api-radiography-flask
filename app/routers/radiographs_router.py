@@ -108,10 +108,43 @@ def create_radiograph():
 	{
 		"tags": ["Radiographs"],
 		"summary": "List radiographs",
-		"description": "Returns a paginated list of radiographs.",
+		"description": "Returns a paginated list with optional filters and sorting.",
 		"parameters": [
+			{"name": "page", "in": "query", "required": False, "type": "integer", "default": 1},
+			{"name": "size", "in": "query", "required": False, "type": "integer", "default": 10},
+			{
+				"name": "sort",
+				"in": "query",
+				"required": False,
+				"type": "string",
+				"default": "study_date:desc",
+				"description": "Format field:order. Example: patient_full_name:asc",
+			},
+			{
+				"name": "patient_name",
+				"in": "query",
+				"required": False,
+				"type": "string",
+				"description": "Partial match over patient_full_name",
+			},
+			{
+				"name": "clinical_history_code",
+				"in": "query",
+				"required": False,
+				"type": "string",
+				"description": "Exact match by clinical history code",
+			},
+			{
+				"name": "study_date",
+				"in": "query",
+				"required": False,
+				"type": "string",
+				"description": "Date filter in format YYYY-MM-DD",
+			},
 			{"name": "skip", "in": "query", "required": False, "type": "integer", "default": 0},
 			{"name": "limit", "in": "query", "required": False, "type": "integer", "default": 10},
+			{"name": "sort_by", "in": "query", "required": False, "type": "string"},
+			{"name": "sort_order", "in": "query", "required": False, "type": "string"},
 		],
 		"responses": {
 			"200": {"description": "Radiographs list returned successfully."},
@@ -120,16 +153,93 @@ def create_radiograph():
 	}
 )
 def list_radiographs():
-	skip = request.args.get("skip", default=0, type=int)
-	limit = request.args.get("limit", default=10, type=int)
+	allowed_sort_fields = {"study_date", "patient_full_name", "clinical_history_code"}
+	allowed_sort_orders = {"asc", "desc"}
+
+	sort_expression = (request.args.get("sort", default="study_date:desc", type=str) or "").strip()
+	sort_by = "study_date"
+	sort_order = "desc"
+	if sort_expression:
+		if ":" in sort_expression:
+			raw_field, raw_order = sort_expression.split(":", 1)
+		else:
+			raw_field, raw_order = sort_expression, "desc"
+		candidate_field = raw_field.strip()
+		candidate_order = raw_order.strip().lower()
+		if candidate_field in allowed_sort_fields:
+			sort_by = candidate_field
+		if candidate_order in allowed_sort_orders:
+			sort_order = candidate_order
+
+	explicit_sort_by = request.args.get("sort_by", default=None, type=str)
+	explicit_sort_order = request.args.get("sort_order", default=None, type=str)
+	if explicit_sort_by in allowed_sort_fields:
+		sort_by = explicit_sort_by
+	if explicit_sort_order and explicit_sort_order.lower() in allowed_sort_orders:
+		sort_order = explicit_sort_order.lower()
+
+	raw_skip = request.args.get("skip", default=None, type=int)
+	raw_limit = request.args.get("limit", default=None, type=int)
+
+	if raw_skip is not None or raw_limit is not None:
+		skip = max(raw_skip or 0, 0)
+		size = raw_limit or 10
+		if size < 1:
+			size = 1
+		if size > 100:
+			size = 100
+		limit = size
+		page = (skip // size) + 1
+	else:
+		page = request.args.get("page", default=1, type=int)
+		size = request.args.get("size", default=10, type=int)
+		if page < 1:
+			page = 1
+		if size < 1:
+			size = 1
+		if size > 100:
+			size = 100
+		skip = (page - 1) * size
+		limit = size
+
+	patient_name = request.args.get("patient_name", default=None, type=str)
+	clinical_history_code = request.args.get("clinical_history_code", default=None, type=str)
+	study_date = request.args.get("study_date", default=None, type=str)
 
 	try:
-		radiographs = radiographs_service.list_radiographs(skip=skip, limit=limit)
+		radiographs = radiographs_service.list_radiographs(
+			skip=skip,
+			limit=limit,
+			patient_name=patient_name,
+			clinical_history_code=clinical_history_code,
+			study_date=study_date,
+			sort_by=sort_by,
+			sort_order=sort_order,
+		)
 	except Exception:
 		radiographs_logger.exception("Unexpected error while listing radiographs")
 		return jsonify({"message": "Internal server error."}), 500
 
-	return jsonify({"message": "Radiographs retrieved.", "data": [serialize_radiograph_record(record) for record in (radiographs or [])]}), 200
+	filters = {
+		"patient_name": patient_name,
+		"clinical_history_code": clinical_history_code,
+		"study_date": study_date,
+	}
+	return jsonify(
+		{
+			"message": "Radiographs retrieved.",
+			"pagination": {
+				"page": page,
+				"size": size,
+				"skip": skip,
+				"limit": limit,
+				"sort_by": sort_by,
+				"sort_order": sort_order,
+			},
+			"filters": filters,
+			"data": [serialize_radiograph_record(record) for record in (radiographs or [])],
+		}
+	), 200
 
 
 @radiographs_bp.route("/radiographs/<int:radiograph_id>", methods=["GET"])

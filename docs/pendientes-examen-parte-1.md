@@ -14,7 +14,7 @@
 - [ ] Evitar plagio/copia entre grupos.
   - Como hacerlo: producir codigo, arquitectura y documentacion propias con commits del equipo.
 
-- [ ] Respetar tecnologias exigidas (Flask + Cloudinary y stack solicitado).
+- [X] Respetar tecnologias exigidas (Flask + Cloudinary y stack solicitado).
   - Como hacerlo: no sustituir framework ni servicios por alternativas fuera de lo pedido.
 
 - [ ] Entregar exactamente la documentacion solicitada.
@@ -34,54 +34,54 @@
 - [ ] Permitir agregar campos opcionales utiles.
   - Como hacerlo: extender modelo/schemas sin romper campos obligatorios.
 
-- [ ] Implementar CRUD completo de registros radiograficos.
+- [X] Implementar CRUD completo de registros radiograficos.
   - Como hacerlo: crear endpoints crear, listar, obtener, actualizar y eliminar.
 
-- [ ] Subir imagenes por multipart/form-data.
+- [X] Subir imagenes por multipart/form-data.
   - Como hacerlo: endpoint de creacion/actualizacion que reciba archivo e info del paciente.
 
-- [ ] Validar tipo y tamano maximo de archivo.
+- [X] Validar tipo y tamano maximo de archivo.
   - Como hacerlo: lista blanca de MIME/extensiones y limite de bytes antes de subir.
 
-- [ ] Almacenar imagen en servicio externo y guardar URL en BD.
+- [X] Almacenar imagen en servicio externo y guardar URL en BD.
   - Como hacerlo: subir a Cloudinary y persistir secure_url/public_id.
 
-- [ ] Servir imagenes por URL CDN, no desde la API.
+- [X] Servir imagenes por URL CDN, no desde la API.
   - Como hacerlo: responder con URL publica de Cloudinary en el recurso.
 
-- [ ] Implementar consulta con paginacion, filtros basicos y ordenamiento.
+- [X] Implementar consulta con paginacion, filtros basicos y ordenamiento.
   - Como hacerlo: parametros page/size/sort + filtros por campos clave.
 
-- [ ] Implementar autenticacion con Google SSO.
+- [X] Implementar autenticacion con Google SSO.
   - Como hacerlo: configurar flujo OAuth con Google y endpoint de login/callback.
 
-- [ ] Generar JWT tras autenticacion para acceso a endpoints protegidos.
+- [X] Generar JWT tras autenticacion para acceso a endpoints protegidos.
   - Como hacerlo: emitir token firmado en login y validar token en rutas privadas.
 
 ## 3) Pendientes tecnicos de implementacion
 
-- [ ] Usar Flask como framework principal.
+- [X] Usar Flask como framework principal.
   - Como hacerlo: mantener app factory/rutas en Flask y modularizar por blueprints.
 
-- [ ] Integrar Cloudinary para gestion de imagenes.
+- [X] Integrar Cloudinary para gestion de imagenes.
   - Como hacerlo: centralizar en servicio dedicado y usar variables de entorno.
 
-- [ ] Mantener arquitectura por capas.
+- [X] Mantener arquitectura por capas.
   - Como hacerlo: separar routers, services, repositories y schemas sin mezclar responsabilidades.
 
-- [ ] Usar SQLite como base de datos.
+- [X] Usar SQLite como base de datos.
   - Como hacerlo: configurar cadena de conexion SQLite en entorno de desarrollo.
 
-- [ ] Usar SQLAlchemy para modelos/consultas.
+- [X] Usar SQLAlchemy para modelos/consultas.
   - Como hacerlo: definir modelos ORM y acceso a datos por repositorios.
 
-- [ ] Gestionar cambios con Alembic.
+- [X] Gestionar cambios con Alembic.
   - Como hacerlo: crear y aplicar migraciones por cada cambio de esquema.
 
-- [ ] Validar entrada y salida con Pydantic.
+- [X] Validar entrada y salida con Pydantic.
   - Como hacerlo: definir schemas request/response y validar en endpoints.
 
-- [ ] Publicar documentacion automatica con Swagger.
+- [X] Publicar documentacion automatica con Swagger.
   - Como hacerlo: configurar Flasgger/OpenAPI y exponer endpoint de docs.
 
 - [ ] Agregar ejemplos claros en endpoints principales.
@@ -121,19 +121,19 @@
 
 ## 5) Checklist alineado a rubrica (para maximo puntaje)
 
-- [ ] Arquitectura y organizacion (15%).
+- [X] Arquitectura y organizacion (15%).
   - Como hacerlo: mantener capas claras, naming consistente y baja dependencia cruzada.
 
-- [ ] Autenticacion SSO + JWT (15%).
+- [X] Autenticacion SSO + JWT (15%).
   - Como hacerlo: flujo completo sin atajos, validacion robusta y pruebas de error.
 
-- [ ] CRUD y logica de negocio (15%).
+- [X] CRUD y logica de negocio (15%).
   - Como hacerlo: operaciones completas con validaciones y manejo correcto de casos borde.
 
-- [ ] Manejo de archivos y CDN (15%).
+- [X] Manejo de archivos y CDN (15%).
   - Como hacerlo: subida estable, validada, con URL publica real y persistencia correcta.
 
-- [ ] Validaciones con Pydantic (10%).
+- [X] Validaciones con Pydantic (10%).
   - Como hacerlo: constraints por campo, mensajes claros y schemas de respuesta.
 
 - [ ] Pipeline (10%).
@@ -150,13 +150,13 @@
 - [ ] API responde en entorno local y en despliegue publico.
   - Como hacerlo: correr prueba de endpoints clave en ambos entornos.
 
-- [ ] Endpoints protegidos exigen JWT valido.
+- [X] Endpoints protegidos exigen JWT valido.
   - Como hacerlo: probar casos con token valido, invalido y ausente.
 
-- [ ] Subida de imagen rechaza archivos invalidos o grandes.
+- [X] Subida de imagen rechaza archivos invalidos o grandes.
   - Como hacerlo: pruebas negativas de formato y tamano.
 
-- [ ] URL de imagen es externa/CDN y persiste correctamente.
+- [X] URL de imagen es externa/CDN y persiste correctamente.
   - Como hacerlo: verificar URL en BD y acceso desde navegador.
 
 - [ ] Migraciones aplicadas y base consistente.
