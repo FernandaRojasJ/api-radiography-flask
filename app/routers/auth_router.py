@@ -1,6 +1,4 @@
-import jwt
 import secrets
-from datetime import datetime
 from urllib.parse import urlencode
 
 import requests
@@ -9,6 +7,7 @@ from flasgger import swag_from
 
 from app.core.config import Config
 from app.repositories.xray_repository import XRayRepository
+from app.services.auth_service import auth_service
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -37,21 +36,6 @@ def _resolve_google_redirect_uri() -> str:
 	if configured_uri:
 		return configured_uri
 	return url_for("auth.google_callback", _external=True)
-
-
-def _issue_local_jwt(subject: str, email: str = None, google_sub: str = None) -> str:
-	now = int(datetime.utcnow().timestamp())
-	token_payload = {
-		"sub": str(subject),
-		"provider": "google",
-		"iat": now,
-		"exp": now + Config.JWT_ACCESS_TOKEN_EXPIRES,
-	}
-	if email:
-		token_payload["email"] = email
-	if google_sub:
-		token_payload["google_sub"] = google_sub
-	return jwt.encode(token_payload, Config.SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
 
 
 @auth_bp.route("/auth/token", methods=["POST"])
@@ -98,14 +82,10 @@ def auth_token():
 	if user_record is None:
 		return jsonify({"message": "User not found in database."}), 404
 
-	now = int(datetime.utcnow().timestamp())
-	token_payload = {
-		"sub": str(user_id),
-		"user_id": str(user_id),
-		"iat": now,
-		"exp": now + Config.JWT_ACCESS_TOKEN_EXPIRES,
-	}
-	token = jwt.encode(token_payload, Config.SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
+	token = auth_service.generate_token(
+		subject=str(user_id),
+		user_id=str(user_id),
+	)
 	return jsonify({"access_token": token, "token_type": "bearer"}), 200
 
 
@@ -259,10 +239,15 @@ def google_callback():
 		return jsonify({"message": "Google profile does not include sub/email."}), 502
 
 	local_subject = email or google_sub
-	local_access_token = _issue_local_jwt(
+	claims = {"provider": "google"}
+	if email:
+		claims["email"] = email
+	if google_sub:
+		claims["google_sub"] = google_sub
+
+	local_access_token = auth_service.generate_token(
 		subject=local_subject,
-		email=email,
-		google_sub=google_sub,
+		extra_claims=claims,
 	)
 
 	return jsonify(

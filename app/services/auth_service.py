@@ -20,15 +20,24 @@ class TokenValidationError(AuthServiceError):
 class AuthService:
     """Service for JWT creation and validation."""
 
-    def generate_token(self, user_id: int) -> str:
+    def generate_token(
+        self,
+        subject: str,
+        user_id: str | None = None,
+        extra_claims: dict[str, Any] | None = None,
+    ) -> str:
         issued_at = int(datetime.utcnow().timestamp())
         expires_at = issued_at + Config.JWT_ACCESS_TOKEN_EXPIRES
-        payload = {
-            "sub": str(user_id),
-            "user_id": str(user_id),
+        payload: dict[str, Any] = {
+            "sub": str(subject),
             "iat": issued_at,
             "exp": expires_at,
         }
+        if user_id is not None:
+            payload["user_id"] = str(user_id)
+        if extra_claims:
+            payload.update(extra_claims)
+
         token = jwt.encode(payload, Config.SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
         return token
 
