@@ -40,9 +40,15 @@ Create a `.env` file in the project root using `.env.example` as template:
 ```env
 DATABASE_URL=sqlite:///./xray_database.db
 SECRET_KEY=your_secret_key
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRES=3600
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_FOLDER=xray_records
+CLOUDINARY_UPLOAD_TYPE=authenticated
+CLOUDINARY_SIGNED_URL_TTL_SECONDS=600
+SECURE_IMAGE_TOKEN_TTL_SECONDS=600
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/auth/google/callback
