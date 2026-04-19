@@ -18,6 +18,7 @@ if config.config_file_name is not None:
 
 from app.models.base import Base
 from app.models.xray_record import XRayRecord
+from app.models.user import User
 
 target_metadata = Base.metadata
 

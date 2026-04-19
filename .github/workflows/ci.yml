@@ -38,7 +38,10 @@ jobs:
       - name: Run smoke tests
         run: |
           python - <<'PY'
+          import time
+          import jwt
           from app.main import create_app
+          from app.core.config import Config
 
           app = create_app()
           client = app.test_client()
@@ -54,6 +57,24 @@ jobs:
           # Token endpoint should validate required payload.
           response_auth = client.post("/auth/token", json={})
           assert response_auth.status_code == 400, response_auth.get_data(as_text=True)
+
+          # Expired JWT must be rejected by protected endpoints.
+          now = int(time.time())
+          expired_token = jwt.encode(
+              {
+                  "sub": "1",
+                  "user_id": "1",
+                  "iat": now - 7200,
+                  "exp": now - 3600,
+              },
+              Config.SECRET_KEY,
+              algorithm=Config.JWT_ALGORITHM,
+          )
+          response_expired = client.get(
+              "/radiographs/1",
+              headers={"Authorization": f"Bearer {expired_token}"},
+          )
+          assert response_expired.status_code == 401, response_expired.get_data(as_text=True)
 
           print("Smoke tests passed.")
           PY
