@@ -1,4 +1,3 @@
-import jwt
 import secrets
 from urllib.parse import urlencode
 
@@ -7,11 +6,13 @@ from flask import Blueprint, jsonify, redirect, request, session, url_for
 from flasgger import swag_from
 
 from app.core.config import Config
-from app.repositories.xray_repository import XRayRepository
+from app.repositories.user_repository import UserRepository
+from app.services.auth_service import auth_service
+from app.models.user import User
 
 
 auth_bp = Blueprint("auth", __name__)
-auth_user_repository = XRayRepository()
+auth_user_repository = UserRepository()
 
 GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
@@ -36,18 +37,6 @@ def _resolve_google_redirect_uri() -> str:
 	if configured_uri:
 		return configured_uri
 	return url_for("auth.google_callback", _external=True)
-
-
-def _issue_local_jwt(subject: str, email: str = None, google_sub: str = None) -> str:
-	token_payload = {
-		"sub": str(subject),
-		"provider": "google",
-	}
-	if email:
-		token_payload["email"] = email
-	if google_sub:
-		token_payload["google_sub"] = google_sub
-	return jwt.encode(token_payload, Config.SECRET_KEY, algorithm="HS256")
 
 
 @auth_bp.route("/auth/token", methods=["POST"])
@@ -94,11 +83,10 @@ def auth_token():
 	if user_record is None:
 		return jsonify({"message": "User not found in database."}), 404
 
-	token_payload = {
-		"sub": str(user_id),
-		"user_id": str(user_id),
-	}
-	token = jwt.encode(token_payload, Config.SECRET_KEY, algorithm="HS256")
+	token = auth_service.generate_token(
+		subject=str(user_record.id),
+		user_id=str(user_record.id),
+	)
 	return jsonify({"access_token": token, "token_type": "bearer"}), 200
 
 
@@ -251,11 +239,37 @@ def google_callback():
 	if not google_sub and not email:
 		return jsonify({"message": "Google profile does not include sub/email."}), 502
 
-	local_subject = email or google_sub
-	local_access_token = _issue_local_jwt(
-		subject=local_subject,
-		email=email,
-		google_sub=google_sub,
+	claims = {"provider": "google"}
+	if email:
+		claims["email"] = email
+	if google_sub:
+		claims["google_sub"] = google_sub
+
+	user = None
+	if google_sub:
+		user = auth_user_repository.get_by_google_id(google_sub)
+	if user is None and email:
+		user = auth_user_repository.get_by_email(email)
+
+	if user is None:
+		user = User(
+			google_id=google_sub or email,
+			email=email or "",
+			full_name=google_user.get("name") or "",
+			picture_url=google_user.get("picture"),
+		)
+	else:
+		user.google_id = google_sub or user.google_id
+		user.email = email or user.email
+		user.full_name = google_user.get("name") or user.full_name
+		user.picture_url = google_user.get("picture") or user.picture_url
+
+	user = auth_user_repository.save(user)
+
+	local_access_token = auth_service.generate_token(
+		subject=str(user.id),
+		user_id=str(user.id),
+		extra_claims=claims,
 	)
 
 	return jsonify(
@@ -264,10 +278,12 @@ def google_callback():
 			"token_type": "bearer",
 			"provider": "google",
 			"user": {
+				"id": user.id,
+				"google_id": user.google_id,
 				"sub": google_sub,
-				"email": email,
-				"name": google_user.get("name"),
-				"picture": google_user.get("picture"),
+				"email": user.email,
+				"name": user.full_name,
+				"picture": user.picture_url,
 			},
 		}
 	), 200

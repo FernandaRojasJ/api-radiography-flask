@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,3 +22,30 @@ class XRayUpdateSchema(BaseModel):
     clinical_history_code: Optional[str] = Field(default=None, min_length=1, max_length=50)
     clinical_description: Optional[str] = Field(default=None, max_length=2000)
     study_date: Optional[datetime] = None
+
+
+class XRayResponseSchema(BaseModel):
+    id: int
+    patient_full_name: str
+    patient_identifier: str
+    clinical_history_code: str
+    clinical_description: str
+    study_date: Optional[datetime] = None
+    image_reference: Optional[str] = None
+    image_url: Optional[str] = None
+
+
+class PaginationSchema(BaseModel):
+    page: int
+    size: int
+    skip: int
+    limit: int
+    sort_by: str
+    sort_order: str
+
+
+class RadiographListSchema(BaseModel):
+    message: str
+    pagination: PaginationSchema
+    filters: dict[str, Optional[str]]
+    data: List[XRayResponseSchema]

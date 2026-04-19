@@ -31,7 +31,8 @@ This project is being built with Flask and follows a layered architecture.
 2. **SQLite for local/dev**: simple setup for first delivery and exam demo.
 3. **Cloudinary for image storage**: API does not serve binary images directly.
 4. **JWT-based protection**: protected routes validate bearer tokens.
-5. **Swagger docs with Flasgger**: quick contract visibility for team and evaluators.
+6. **Google SSO user model**: a local `users` table stores `google_id`, `email`, `name`, and `created_at`.
+7. **Swagger docs with Flasgger**: quick contract visibility for team and evaluators.
 
 ## Environment Variables
 
@@ -40,9 +41,15 @@ Create a `.env` file in the project root using `.env.example` as template:
 ```env
 DATABASE_URL=sqlite:///./xray_database.db
 SECRET_KEY=your_secret_key
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRES=3600
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_FOLDER=xray_records
+CLOUDINARY_UPLOAD_TYPE=authenticated
+CLOUDINARY_SIGNED_URL_TTL_SECONDS=600
+SECURE_IMAGE_TOKEN_TTL_SECONDS=600
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/auth/google/callback
@@ -215,11 +222,13 @@ curl -X POST "http://127.0.0.1:5000/radiographs" \
   -F "image_file=@./sample.png;type=image/png"
 ```
 
+
 ### 4) List with pagination, filters, and sorting
 
 ```bash
 curl "http://127.0.0.1:5000/radiographs?page=1&size=10&sort=study_date:desc&patient_name=juan"
 ```
+
 
 ### 5) Get by id (protected)
 
@@ -227,6 +236,7 @@ curl "http://127.0.0.1:5000/radiographs?page=1&size=10&sort=study_date:desc&pati
 curl -H "Authorization: Bearer <JWT_TOKEN>" \
   "http://127.0.0.1:5000/radiographs/1"
 ```
+
 
 ### 6) Update (multipart optional image)
 
