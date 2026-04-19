@@ -48,6 +48,10 @@ def create_app():
             minute=59,
         )
 
+    @app.route("/")
+    def index():
+        return {"message": "API Radiography Flask is running"}, 200
+
     @app.errorhandler(RequestEntityTooLarge)
     def handle_file_too_large(_):
         return {
