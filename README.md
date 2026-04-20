@@ -124,12 +124,22 @@ uv shell
 
 ## Run with `uv`
 
-Use `uv` to sync, lock, and execute the project without a manual virtual environment.
+Use `uv` to sync and lock the project without a manual virtual environment.
+
+Local development (Flask dev server):
 
 ```bash
 uv lock
 uv sync
 uv run python -m app.main
+```
+
+Production / Render deploy (production WSGI server):
+
+```bash
+uv lock
+uv sync
+uv run gunicorn app.main:app
 ```
 
 If you prefer a shell inside the managed environment:
