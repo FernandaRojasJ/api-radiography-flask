@@ -87,103 +87,81 @@ curl -i "http://127.0.0.1:5000/auth/google/login?mode=json"
 
 ## Setup
 
-### Windows (PowerShell)
+### Manage with `uv`
 
-1. Create and activate virtual environment.
+This project now uses `pyproject.toml` and `uv` for dependency / environment management.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-2. Install dependencies.
-
-```powershell
-python -m pip install -r requirements.txt
-```
-
-3. Apply database migrations.
-
-```powershell
-python -m alembic upgrade head
-```
-
-4. Run the API.
-
-```powershell
-python -m app.main
-```
-
-### Linux/macOS (Non-NixOS)
-
-1. Ensure Python 3.12+ is installed.
-
-2. Create and activate virtual environment.
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-3. Upgrade pip and install dependencies.
+1. Install `uv` globally or in a bootstrap environment:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install uv
 ```
 
-4. Apply database migrations.
+2. Install the project dependencies:
 
 ```bash
-python -m alembic upgrade head
+uv install
 ```
 
-5. Run the API.
+3. Create or refresh the lock file:
 
 ```bash
-python -m app.main
+uv lock
 ```
 
-### Linux/macOS (NixOS with Flake)
+4. Run the API using the managed environment:
 
-This repository includes a simple flake-based dev shell with system dependencies.
+```bash
+uv run python -m app.main
+```
 
-1. Enter the dev shell.
+If you want to get a shell inside the managed environment:
+
+```bash
+uv shell
+```
+
+## Run with `uv`
+
+Use `uv` to sync and lock the project without a manual virtual environment.
+
+Local development (Flask dev server):
+
+```bash
+uv lock
+uv sync
+uv run python -m app.main
+```
+
+Production / Render deploy (production WSGI server):
+
+```bash
+uv lock
+uv sync
+uv run gunicorn app.main:app
+```
+
+If you prefer a shell inside the managed environment:
+
+```bash
+uv shell
+```
+
+### NixOS / flake users
+
+If you use Nix, enter the dev shell first:
 
 ```bash
 nix develop
 ```
 
-If you use direnv, allow it once and it will auto-enter:
+Then install and run with `uv`:
 
 ```bash
-direnv allow
-```
-
-2. Install dependencies.
-
-```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-3. Apply migrations and run.
-
-```bash
-python -m alembic upgrade head
-python -m app.main
-```
-
-Notes:
-
-- Always run the app with the active venv interpreter (`python`).
-- If you still have an old `.venv` from another Python version, recreate it:
-
-```bash
-rm -rf .venv
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+uv install
+uv lock
+uv run python -m app.main
 ```
 
 ## API Docs and Test URLs

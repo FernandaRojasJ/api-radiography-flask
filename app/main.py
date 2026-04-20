@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flasgger import Swagger
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -33,9 +35,9 @@ SWAGGER_TEMPLATE = {
 
 def create_app():
     app = Flask(__name__)
-    
+
     app.config.from_object(Config)
-    
+
     db.init_app(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     app.register_blueprint(auth_bp)
@@ -58,10 +60,12 @@ def create_app():
             "message": "File size exceeds configured maximum.",
             "max_file_size_mb": app.config.get("MAX_FILE_SIZE_MB", 5),
         }, 413
-    
+
     return app
 
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
