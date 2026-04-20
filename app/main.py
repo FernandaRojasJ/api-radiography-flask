@@ -35,9 +35,9 @@ SWAGGER_TEMPLATE = {
 
 def create_app():
     app = Flask(__name__)
-    
+
     app.config.from_object(Config)
-    
+
     db.init_app(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     app.register_blueprint(auth_bp)
@@ -60,7 +60,7 @@ def create_app():
             "message": "File size exceeds configured maximum.",
             "max_file_size_mb": app.config.get("MAX_FILE_SIZE_MB", 5),
         }, 413
-    
+
     return app
 
 app = create_app()
