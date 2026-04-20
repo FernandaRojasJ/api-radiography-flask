@@ -20,16 +20,9 @@
           pkg-config
           gcc
         ];
-        # Set up the virtual environment and activate it when the shell starts
+        # uv manages the virtual environment automatically
         shellHook = ''
-          if [ ! -x .venv/bin/python ]; then
-            echo "[nix] Creating virtual environment in .venv"
-            python -m venv .venv
-          fi
-
-          source .venv/bin/activate
-          hash -r
-          echo "[nix] Virtual environment active: $VIRTUAL_ENV"
+          echo "[nix] uv environment ready - run 'uv sync' to install dependencies"
         '';
       };
     };
