@@ -17,12 +17,12 @@ This project is being built with Flask and follows a layered architecture.
 
 ## Current Architecture
 
-- `app/routers`: HTTP endpoints (in progress)
-- `app/services`: business logic and integrations (in progress)
-- `app/repositories`: data access layer (in progress)
-- `app/schemas`: request/response validation with Pydantic (in progress)
+- `app/routers`: HTTP endpoints (ready)
+- `app/services`: business logic and integrations (ready)
+- `app/repositories`: data access layer (ready)
+- `app/schemas`: request/response validation with Pydantic (ready)
 - `app/models`: SQLAlchemy models (ready)
-- `app/core`: shared config and security utilities (partially ready)
+- `app/core`: shared config and security utilities (ready)
 - `migrations`: Alembic environment and migration history (ready)
 
 ## Technical Decisions
@@ -89,47 +89,13 @@ curl -i "http://127.0.0.1:5000/auth/google/login?mode=json"
 
 ### Manage with `uv`
 
-This project now uses `pyproject.toml` and `uv` for dependency / environment management.
+This project uses `pyproject.toml` and `uv` for dependency and environment management.
 
-1. Install `uv` globally or in a bootstrap environment:
+**Local development:**
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install uv
-```
-
-2. Install the project dependencies:
-
-```bash
-uv install
-```
-
-3. Create or refresh the lock file:
-
-```bash
-uv lock
-```
-
-4. Run the API using the managed environment:
-
-```bash
-uv run python -m app.main
-```
-
-If you want to get a shell inside the managed environment:
-
-```bash
-uv shell
-```
-
-## Run with `uv`
-
-Use `uv` to sync and lock the project without a manual virtual environment.
-
-Local development (Flask dev server):
-
-```bash
-uv lock
 uv sync
 uv run python -m app.main
 ```
@@ -201,14 +167,14 @@ If you use Nix, enter the dev shell first:
 
 ```bash
 nix develop
+uv sync
+uv run python -m app.main
 ```
 
-Then install and run with `uv`:
+**Optional shell:**
 
 ```bash
-uv install
-uv lock
-uv run python -m app.main
+uv shell
 ```
 
 ## API Docs and Test URLs
