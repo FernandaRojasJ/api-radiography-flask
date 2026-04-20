@@ -100,15 +100,70 @@ uv sync
 uv run python -m app.main
 ```
 
-**Production / Render:**
+## Deploy en Render
 
-```bash
-uv sync --locked
-uv run alembic upgrade head
-uv run gunicorn app.main:app
+Este proyecto puede desplegarse en Render como un `Web Service` usando `gunicorn`.
+
+- Build Command:
+  ```bash
+  uv lock
+  uv sync
+  ```
+- Start Command:
+  ```bash
+  uv run gunicorn app.main:app
+  ```
+- Opcional (para aplicar migraciones en el despliegue):
+  ```bash
+  uv run alembic upgrade head
+  ```
+
+Render proporciona la variable `PORT` automáticamente. La aplicación ya la usa desde `os.environ["PORT"]` en `app/main.py`, por lo que no es necesario definirla manualmente.
+
+### Variables de entorno necesarias en Render
+
+Configura estas variables en el dashboard de Render:
+
+- `DATABASE_URL`
+- `SECRET_KEY`
+- `JWT_ALGORITHM`
+- `JWT_ACCESS_TOKEN_EXPIRES`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `CLOUDINARY_FOLDER`
+- `CLOUDINARY_UPLOAD_TYPE`
+- `CLOUDINARY_SIGNED_URL_TTL_SECONDS`
+- `SECURE_IMAGE_TOKEN_TTL_SECONDS`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI`
+- `GOOGLE_OAUTH_SCOPES`
+- `GOOGLE_OAUTH_TIMEOUT_SECONDS`
+
+### Nota de base de datos
+
+No uses SQLite local para producción en Render, porque el almacenamiento no es persistente. Para un despliegue real, utiliza una base de datos gestionada y apunta `DATABASE_URL` a ella (por ejemplo Render Postgres o una DB externa).
+
+### Google OAuth
+
+Si usas Google SSO, la URI de redirección debe coincidir con la URL de tu servicio Render:
+
+```text
+https://<tu-servicio>.onrender.com/auth/google/callback
 ```
 
-**NixOS / flake users:**
+Asegúrate de actualizar esa URI también en la consola de Google Cloud y en `GOOGLE_REDIRECT_URI`.
+
+If you prefer a shell inside the managed environment:
+
+```bash
+uv shell
+```
+
+### NixOS / flake users
+
+If you use Nix, enter the dev shell first:
 
 ```bash
 nix develop
