@@ -12,6 +12,14 @@ venv
 *.sqlite
 *.sqlite3
 
+# Packaging and build artifacts
+*.egg-info/
+build/
+dist/
+pip-wheel-metadata/
+dependency_links.txt
+PKG-INFO
+
 # Python cache
 __pycache__/
 *.pyc
